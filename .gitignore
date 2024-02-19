@@ -1,0 +1,9 @@
+.vscode/
+
+**/venv/**
+**/__pycache__/**
+old/**
+
+.env
+**.env.**
+**.env
