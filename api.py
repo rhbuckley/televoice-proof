@@ -7,20 +7,10 @@ from fastapi.logger import logger
 from fastapi.websockets import WebSocketState
 
 from processing.telephony import VonageTel
-from processing.texttospeech import PlayHTTTS
+from processing.texttospeech import ElevenLabsTTS
 from processing.speechtotext import DeepgramSTT
 from processing.generate_response import OpenAIGPT
-from processing.texttospeech.elevenlabs import ElevenLabsTTS
-from processing.texttospeech.openai import OpenAITTS
 
-# ----------------------------------------------------------------------------#
-# Surpress Websocket Logging
-# ----------------------------------------------------------------------------#
-
-# logging.getLogger('asyncio').setLevel(logging.ERROR)
-# logging.getLogger('asyncio.coroutines').setLevel(logging.ERROR)
-# logging.getLogger('websockets.server').setLevel(logging.ERROR)
-# logging.getLogger('websockets.protocol').setLevel(logging.ERROR)
 
 # ----------------------------------------------------------------------------#
 # App Config.
@@ -119,11 +109,11 @@ async def websocket_endpoint(websocket: WebSocket):
         # generate response & reset transcript
         response_stream = gpt.generate()
 
-        # When changing this, sometimes, this is not async
         response_media = await tts.speak_stream(response_stream)
 
         async for chunk in response_media:
-            await websocket.send_bytes(chunk)
+            if not websocket.client_state == WebSocketState.DISCONNECTED:
+                await websocket.send_bytes(chunk)
 
         await stt.resume()
 
